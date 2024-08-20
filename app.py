@@ -19,6 +19,7 @@ fda_nda = db.novel_drugs_approvals
 
 # Initialize the Dash app
 app = dash.Dash()
+server = app.server
 
 # Global variables
 last_updated_time = datetime.now(timezone.utc)
@@ -291,3 +292,4 @@ def update_yearly_trend(n_intervals):
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+    
