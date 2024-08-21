@@ -128,7 +128,7 @@ app.layout = html.Div(style={
                                  children="[Dynamic Time]",
                                  style={'padding': '20px', 'color': '#00FFF4', 'margin-top': '30px',
                                         'display': 'block'}),
-                       "HKT"
+                       "UTC"
                    ])
         ])
     ]),
