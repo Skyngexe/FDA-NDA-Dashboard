@@ -1,77 +1,38 @@
 import dash
-import pandas as pd
 from dash import dcc, html
-from dash.dependencies import Input, Output
-import plotly.express as px
-from pymongo.mongo_client import MongoClient
-from dotenv import load_dotenv
-import os
-from datetime import datetime, timezone
-import threading
+import requests
+import pandas as pd
+from dash.dependencies import Input, Output, State
 import plotly.graph_objs as go
+from bson import json_util
+from datetime import datetime, timezone
+import plotly.express as px
 
-# Load environment variables
-load_dotenv(dotenv_path="os.env")
-mongo_url = os.getenv('MONGO_URI')
-client = MongoClient(mongo_url)
-db = client.fda
-fda_nda = db.novel_drugs_approvals
-
-# Initialize the Dash app
-app = dash.Dash()
+app = dash.Dash(__name__)
 server = app.server
 
-# Global variables
-last_updated_time = datetime.now(timezone.utc)
-monthly_approvals_count = 0
-most_recent_drug_info = None
 
-# Function to monitor database changes
-def monitor_changes():
-    global last_updated_time, monthly_approvals_count, most_recent_drug_info
-    with fda_nda.watch() as stream:
-        while True:
-            change = stream.next()  # Wait for a change
-            last_updated_time = datetime.now(timezone.utc)
-            data = list(fda_nda.find())
-            df = pd.DataFrame(data)
-            df['Approval Date'] = pd.to_datetime(df['Approval Date'], format='%m/%d/%Y')
+# Fetch full data once
+def fetch_full_data():
+    response = requests.get('http://127.0.0.1:5000/api/data')
+    data = response.json()
+    df = pd.DataFrame(data.get('data'))
+    most_recent_drug = data.get('most_recent_drug')
+    return df, most_recent_drug
 
-            current_month = datetime.now().month
-            current_year = datetime.now().year
+# Check for updates
+def check_for_updates():
+    response = requests.get('http://127.0.0.1:5000/api/update')
+    data = response.json()
+    df = pd.DataFrame(data.get('data'))
+    most_recent_drug = data.get('most_recent_drug')
+    return df, most_recent_drug
 
-            # Update monthly approvals count
-            monthly_approvals_count = df[
-                (df['Approval Date'].dt.month == current_month) &
-                (df['Approval Date'].dt.year == current_year)
-            ].shape[0]
 
-            # Get the most recent drug
-            most_recent_drug_info = df.loc[df['Approval Date'].idxmax()] if not df.empty else None
+# Initial data load
+initial_data, most_recent_drug = fetch_full_data()
+initial_data_json = json_util.dumps({'data': initial_data.to_dict(orient='records'), 'most_recent_drug': most_recent_drug})
 
-# Start the change monitoring thread
-change_thread = threading.Thread(target=monitor_changes, daemon=True)
-change_thread.start()
-
-# Data preprocessing
-data = list(fda_nda.find())
-df = pd.DataFrame(data)
-df['Approval Date'] = pd.to_datetime(df['Approval Date'], format='%m/%d/%Y')
-df['Year'] = df['Approval Date'].dt.year
-
-current_month = datetime.now().month
-current_year = datetime.now().year
-monthly_approvals_count = df[
-    (df['Approval Date'].dt.month == current_month) &
-    (df['Approval Date'].dt.year == current_year)
-].shape[0]
-
-most_recent_drug_info = df.loc[df['Approval Date'].idxmax()] if not df.empty else None
-
-# Create the yearly approvals line chart
-max_approval_count = df.groupby('Year').size().reset_index(name='Approval Count')
-
-# Layout of the app
 app.layout = html.Div(style={
     'backgroundColor': '#1F2833',
     'padding': '20px',
@@ -83,6 +44,7 @@ app.layout = html.Div(style={
         interval=600 * 1000,
         n_intervals=0
     ),
+    dcc.Store(id='stored-data', data = initial_data_json),
     html.H1("NDA and BLA Approvals Dashboard", style={'color': '#00FFF4', 'marginBottom': '40px'}),
 
     # Cards for statistics
@@ -96,9 +58,13 @@ app.layout = html.Div(style={
             'width': '300px',
             'boxShadow': '0 4px 15px rgba(0, 0, 0, 0.5)'
         }, children=[
-            html.H3("Approved Drugs This Month", style={'fontSize': '24px'}),
-            html.P(id='monthly-approvals-count', style={'fontSize': '40px', 'color': '#00FFF4'})
-        ]),
+            html.H3(f"Approved Drugs This Month ({datetime.today().month} / {datetime.today().year})", style={'fontSize': '24px'}),
+            html.P(id='monthly-approvals-count', style={'fontSize': '40px', 'color': '#00FFF4'}),
+            html.P("Approved Drugs Last Month", style={'fontSize': '12px'}),
+            html.P(id='past-month-approvals-count', style={'fontSize': '20px', 'color': '#FF5733'})
+        ])
+
+        ,
         html.Div(style={
             'backgroundColor': '#0B0C10',
             'padding': '20px',
@@ -109,7 +75,8 @@ app.layout = html.Div(style={
             'boxShadow': '0 4px 15px rgba(0, 0, 0, 0.5)'
         }, children=[
             html.H3("Most Recently Approved Drug", style={'fontSize': '24px'}),
-            html.P(id='most-recent-drug-name', style={'fontSize': '20px', 'textAlign': 'center', 'marginTop': '10px', 'color':'#ECFF00'}),
+            html.P(id='most-recent-drug-name',
+                   style={'fontSize': '20px', 'textAlign': 'center', 'marginTop': '10px', 'color': '#ECFF00'}),
             html.P(id='most-recent-drug-company', style={'fontSize': '18px', 'color': '#00FFF4'})
         ]),
         html.Div(style={
@@ -135,48 +102,113 @@ app.layout = html.Div(style={
 
     # Yearly approvals line chart
     dcc.Graph(id='yearly-approvals',
-              style={'marginBottom': '40px', 'width': '80%', 'display': 'inline-block', 'boxShadow': '0 4px 15px rgba(0, 0, 0, 0.5)', 'borderRadius': '10px'}),
+              style={'marginBottom': '40px', 'width': '80%', 'display': 'inline-block',
+                     'boxShadow': '0 4px 15px rgba(0, 0, 0, 0.5)', 'borderRadius': '10px'}),
 
     # Bar chart for top companies by selected year
     html.Div(style={'position': 'relative', 'display': 'inline-block', 'width': '80%'}, children=[
-        dcc.Graph(id='top-companies-bar-chart', style={'boxShadow': '0 4px 15px rgba(0, 0, 0, 0.5)', 'borderRadius': '10px'}),
+        dcc.Graph(id='top-companies-bar-chart',
+                  style={'boxShadow': '0 4px 15px rgba(0, 0, 0, 0.5)', 'borderRadius': '10px'}),
         dcc.Dropdown(
             id='year-dropdown',
-            options=[{'label': str(year), 'value': year} for year in sorted(df['Year'].unique())],
-            value=current_year,
+            options=[],  # Will be populated dynamically
+            value=None,
             clearable=False,
-            style={'color': '#000000', 'position': 'absolute', 'top': '20px', 'right': '10px', 'width': '150px', 'borderRadius': '10px'}
+            style={'color': '#000000', 'position': 'absolute', 'top': '20px', 'right': '10px', 'width': '150px',
+                   'borderRadius': '10px'}
         )
     ]),
 
     dcc.Graph(id='drug_portfolio_size',
-              style={'marginBottom': '40px', 'width': '80%', 'display': 'inline-block', 'boxShadow': '0 4px 15px rgba(0, 0, 0, 0.5)', 'borderRadius': '10px'}),
+              style={'marginBottom': '40px', 'width': '80%', 'display': 'inline-block',
+                     'boxShadow': '0 4px 15px rgba(0, 0, 0, 0.5)', 'borderRadius': '10px'}),
 ])
+
+
+@app.callback(
+    Output('stored-data', 'data'),
+    [Input('interval-component', 'n_intervals')],
+    [State('stored-data', 'data')]
+)
+def fetch_and_store_data(n_intervals, stored_data):
+    df, drug = check_for_updates()
+    responses = {'data': df, 'most_recent_drug': drug}
+    # Load existing data from the store
+    if stored_data:
+        existing_data = json_util.loads(stored_data)
+    else:
+        existing_data = {'data': [], 'most_recent_drug': None}
+
+    # Append new data if it's not empty
+    if not df.empty:
+        existing_data['data'].extend(df)
+    existing_data['most_recent_drug'] = drug
+
+    return json_util.dumps(existing_data)
+
 
 @app.callback(
     Output('monthly-approvals-count', 'children'),
+    Output('past-month-approvals-count', 'children'),
     Output('most-recent-drug-name', 'children'),
     Output('most-recent-drug-company', 'children'),
     Output('last-updated-time-value', 'children'),
-    Input('interval-component', 'n_intervals')
+    Input('stored-data', 'data')
 )
-def update_statistics(n_intervals):
-    drug_name = most_recent_drug_info['Drug Name'].split('N')[0] if most_recent_drug_info is not None else "N/A"
-    drug_company = f"Company: {most_recent_drug_info['Company']}" if most_recent_drug_info is not None else "N/A"
+def update_statistics(data):
+    data = json_util.loads(data)
+    df = pd.DataFrame(data.get('data'))
+    most_recent_drug_info = data.get('most_recent_drug')[0]
+
+    df['Approval Date'] = pd.to_datetime(df['Approval Date'], format='%m/%d/%Y')
+    df = df.dropna(subset=['Approval Date'])
+
+    current_month = datetime.today().month
+    current_year = datetime.now().year
+    monthly_approvals_count = df[
+        (df['Approval Date'].dt.month == current_month) &
+        (df['Approval Date'].dt.year == current_year)
+        ].shape[0]
+
+    last_month_date = datetime.now() - pd.DateOffset(months=1)
+    past_month = last_month_date.month
+    past_year = last_month_date.year
+
+    past_month_approvals_count = df[
+        (df['Approval Date'].dt.month == past_month) &
+        (df['Approval Date'].dt.year == past_year)
+        ].shape[0]
+
+    drug_name = most_recent_drug_info['Drug Name'].split('N')[0] if most_recent_drug_info else "N/A"
+    drug_company = f"Company: {most_recent_drug_info['Company']}" if most_recent_drug_info else "N/A"
+    last_updated_time = datetime.now(timezone.utc)
 
     return (
         str(monthly_approvals_count),
+        str(past_month_approvals_count),
         drug_name,
         drug_company,
         last_updated_time.strftime("%Y-%m-%d %H:%M:%S")
     )
 
+
 @app.callback(
     Output('top-companies-bar-chart', 'figure'),
-    [Input('year-dropdown', 'value'), Input('interval-component', 'n_intervals')]
+    Output('year-dropdown', 'options'),
+    Output('year-dropdown', 'value'),
+    Input('stored-data', 'data')
 )
-def update_bar_chart(selected_year, n_intervals):
-    filtered_df = df[df['Year'] == selected_year]
+def update_bar_chart(data):
+    data = json_util.loads(data)
+    df = pd.DataFrame(data.get('data'))
+
+    df['Approval Date'] = pd.to_datetime(df['Approval Date'], errors='coerce')
+
+    current_year = datetime.today().year
+
+    year_options = [{'label': str(year), 'value': year} for year in sorted(df['Approval Date'].dt.year.unique())]
+
+    filtered_df = df[df['Approval Date'].dt.year == current_year]
     top_companies = filtered_df['Company'].value_counts().nlargest(10)
     fig_bar = go.Figure(data=[
         go.Bar(x=top_companies.index,
@@ -188,7 +220,7 @@ def update_bar_chart(selected_year, n_intervals):
     ])
 
     fig_bar.update_layout(
-        title=f'Top 10 Companies in {selected_year} by Number of Approvals',
+        title=f'Top 10 Companies in {current_year} by Number of Approvals',
         plot_bgcolor='#0B0C10',
         paper_bgcolor='#0B0C10',
         font_color='white',
@@ -198,15 +230,15 @@ def update_bar_chart(selected_year, n_intervals):
     fig_bar.update_traces(
         hovertemplate="<br>%{x} <br>Approval Count: %{y}<extra></extra>"
     )
-    return fig_bar
+    return fig_bar, year_options, current_year
 
 @app.callback(
     Output('drug_portfolio_size', 'figure'),
-    Input('interval-component','n_intervals')
+    Input('stored-data', 'data')
 )
-def update_drug_portfolio_size(n_intervals):
-    data = list(fda_nda.find())
-    df = pd.DataFrame(data)
+def update_drug_portfolio_size(data):
+    data = json_util.loads(data)
+    df = pd.DataFrame(data.get('data'))
     drug_portfolio_size = df.groupby('Company')['_id'].count().reset_index(name='portfolio_size')
     drug_portfolio_size['count'] = drug_portfolio_size.groupby('portfolio_size')['Company'].transform('count')
 
@@ -240,11 +272,11 @@ def update_drug_portfolio_size(n_intervals):
 
 @app.callback(
     Output('yearly-approvals', 'figure'),
-    Input('interval-component', 'n_intervals')
+    Input('stored-data', 'data')
 )
-def update_yearly_trend(n_intervals):
-    data = list(fda_nda.find())
-    df = pd.DataFrame(data)
+def update_yearly_trend(data):
+    data = json_util.loads(data)
+    df = pd.DataFrame(data.get('data'))
     df['Approval Date'] = pd.to_datetime(df['Approval Date'], format='%m/%d/%Y')
     df['Year'] = df['Approval Date'].dt.year
 
@@ -290,6 +322,6 @@ def update_yearly_trend(n_intervals):
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)')
     return fig
 
+
 if __name__ == '__main__':
-    app.run_server(debug=True)
-    
+    app.run_server()
