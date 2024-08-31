@@ -8,6 +8,7 @@ import calendar
 from bson import json_util
 
 app = Flask(__name__)
+server = app.server
 load_dotenv(dotenv_path="../os.env")
 mongo_url = os.getenv('MONGO_URI')
 app.config["MONGO_URI"] = mongo_url
