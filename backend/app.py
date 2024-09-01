@@ -46,7 +46,7 @@ def update():
     end_date = datetime(start_date.year, start_date.month, last_day, 23, 59, 59)
 
     data = list(fda_nda.find({
-        "Approval Date": {
+        "Approval Date_1": {
             "$gte": start_date,
             "$lte": end_date
         }
