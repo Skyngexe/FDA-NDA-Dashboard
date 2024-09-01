@@ -4,4 +4,3 @@ plotly
 gunicorn
 pymongo
 requests
-flask_caching
