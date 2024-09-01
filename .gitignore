@@ -1,4 +1,5 @@
-.idea/workspace.xml
-.venv
+.idea
 venv
-
+*.pyc
+.DS_Store
+.env
