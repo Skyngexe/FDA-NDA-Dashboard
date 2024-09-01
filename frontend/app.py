@@ -7,12 +7,18 @@ import plotly.graph_objs as go
 from bson import json_util
 from datetime import datetime, timezone
 import plotly.express as px
+from flask_caching import Cache
 
 app = dash.Dash(__name__)
 server = app.server
+cache = Cache(app.server, config={
+    'CACHE_TYPE': 'filesystem',
+    'CACHE_DIR': 'cache-directory'
+})
 
 
-# Fetch full data once
+TIMEOUT = 600
+@cache.memoize(timeout=TIMEOUT)
 def fetch_full_data():
     response = requests.get('https://fda-nda-dashboard.onrender.com/api/data')
     data = response.json()
