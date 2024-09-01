@@ -14,7 +14,7 @@ server = app.server
 
 # Fetch full data once
 def fetch_full_data():
-    response = requests.get('http://52.41.36.82/api/data')
+    response = requests.get('https://fda-nda-dashboard.onrender.com/api/data')
     data = response.json()
     df = pd.DataFrame(data.get('data'))
     most_recent_drug = data.get('most_recent_drug')
@@ -22,7 +22,7 @@ def fetch_full_data():
 
 # Check for updates
 def check_for_updates():
-    response = requests.get('http://52.41.36.82/api/update')
+    response = requests.get('https://fda-nda-dashboard.onrender.com/api/update')
     data = response.json()
     df = pd.DataFrame(data.get('data'))
     most_recent_drug = data.get('most_recent_drug')
