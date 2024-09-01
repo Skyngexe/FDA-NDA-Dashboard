@@ -19,7 +19,7 @@ Ensure you have set up the [FDA NDA scraper](https://github.com/Skyngexe/fda_nda
 1. Clone this repository  
 `git clone git@github.com:Skyngexe/FDA-NDA-Dashboard.git`
 3. Install the required dependencies listed in requirements.txt
-4. To run the dashboard locally `python app.py`
+4. To run the dashboard locally, run both app.py in frontend and backend file 
 5. Deploy the dashboard with [render](https://render.com)
 
 
