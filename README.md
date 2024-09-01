@@ -6,9 +6,10 @@ Click here to view the [Dashboard](https://fda-nda-dashboard.onrender.com/)
 - Interactive Charts: Built with Plotly Dash, the dashboard allows users to explore data through dynamic charts and graphs.
 
 ### Technologies Used:
-- Plotly Dash: For building interactive visualizations.
+- Dash plotly (frontend): For building interactive visualizations.
+- Flask (backend): For building api endpoints to fetch data and data processing from the database
 - MongoDB: Used for storing and retrieving scraped data.
-- Python: Backend logic and data processing.
+- Python
 
 ## Getting Started 
 ### Prerequisites
