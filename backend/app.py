@@ -32,7 +32,6 @@ def get_full_data():
 def get_data():
     data = list(fda_nda.find())
     df = pd.DataFrame(data)
-    df['Approval Date'] = pd.to_datetime(df['Approval Date'])  # Convert to datetime
     df['Year'] = df['Approval Date'].dt.year  # Extract the year
     return df
 
