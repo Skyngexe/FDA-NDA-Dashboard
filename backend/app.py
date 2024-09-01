@@ -6,11 +6,8 @@ from datetime import datetime
 import pandas as pd
 import calendar
 from bson import json_util
-from flask_caching import Cache
 
 app = Flask(__name__)
-cache = Cache()
-cache.init_app(app)
 load_dotenv(dotenv_path="../os.env")
 mongo_url = os.getenv('MONGO_URI')
 app.config["MONGO_URI"] = mongo_url
@@ -24,7 +21,6 @@ def default():
 
 # api to fetch data from database
 @app.route('/api/data', methods=['GET'])
-@cache.cached(timeout=600)
 def get_full_data():
     df = get_data()
     most_recent_drug = list(fda_nda.find().sort({'_id': -1}).limit(1))
@@ -64,4 +60,4 @@ def update():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
