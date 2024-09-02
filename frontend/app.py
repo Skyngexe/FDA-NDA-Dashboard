@@ -191,24 +191,14 @@ def update_statistics(data):
         last_updated_time.strftime("%Y-%m-%d %H:%M:%S")
     )
 
-
 @app.callback(
     Output('top-companies-bar-chart', 'figure'),
     Output('year-dropdown', 'options'),
     Output('year-dropdown', 'value'),
-    Input('stored-data', 'data')
+    [Input('year-dropdown', 'value'), Input('stored-data', 'data')]
 )
-def update_bar_chart(data):
-    data = json_util.loads(data)
-    df = pd.DataFrame(data.get('data'))
-
-    df['Approval Date'] = pd.to_datetime(df['Approval Date'], errors='coerce')
-
-    current_year = datetime.today().year
-
-    year_options = [{'label': str(year), 'value': year} for year in sorted(df['Approval Date'].dt.year.unique())]
-
-    filtered_df = df[df['Approval Date'].dt.year == current_year]
+def update_bar_chart(selected_year, n_intervals):
+    filtered_df = df[df['Year'] == selected_year]
     top_companies = filtered_df['Company'].value_counts().nlargest(10)
     fig_bar = go.Figure(data=[
         go.Bar(x=top_companies.index,
@@ -220,7 +210,7 @@ def update_bar_chart(data):
     ])
 
     fig_bar.update_layout(
-        title=f'Top 10 Companies in {current_year} by Number of Approvals',
+        title=f'Top 10 Companies in {selected_year} by Number of Approvals',
         plot_bgcolor='#0B0C10',
         paper_bgcolor='#0B0C10',
         font_color='white',
@@ -230,7 +220,7 @@ def update_bar_chart(data):
     fig_bar.update_traces(
         hovertemplate="<br>%{x} <br>Approval Count: %{y}<extra></extra>"
     )
-    return fig_bar, year_options, current_year
+    return fig_bar
 
 @app.callback(
     Output('drug_portfolio_size', 'figure'),
