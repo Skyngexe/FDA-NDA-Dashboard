@@ -195,7 +195,7 @@ def update_statistics(data):
     Output('top-companies-bar-chart', 'figure'),
     Output('year-dropdown', 'options'),
     Output('year-dropdown', 'value'),
-    [Input('stored-data', 'data'), Input('year-dropdown', 'value')
+    [Input('stored-data', 'data'), Input('year-dropdown', 'value')]
 )
 def update_bar_chart(data, selected_year):
     data = json_util.loads(data)
