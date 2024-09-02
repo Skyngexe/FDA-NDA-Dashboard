@@ -207,6 +207,9 @@ def update_bar_chart(data, selected_year):
     year_options = [{'label': str(year), 'value': year} for year in sorted(df['Approval Date'].dt.year.unique())]
     if not selected_year:
         selected_year = current_year
+    else:
+        current_year = selected_year 
+        
     filtered_df = df[df['Approval Date'].dt.year == selected_year]
     top_companies = filtered_df['Company'].value_counts().nlargest(10)
     fig_bar = go.Figure(data=[
