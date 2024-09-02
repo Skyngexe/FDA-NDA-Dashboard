@@ -112,7 +112,7 @@ app.layout = html.Div(style={
         dcc.Dropdown(
             id='year-dropdown',
             options=[],  # Will be populated dynamically
-            value=datetime.today().year,
+            value=None,
             clearable=False,
             style={'color': '#000000', 'position': 'absolute', 'top': '20px', 'right': '10px', 'width': '150px',
                    'borderRadius': '10px'}
@@ -205,7 +205,8 @@ def update_bar_chart(data, selected_year):
     current_year = datetime.today().year
 
     year_options = [{'label': str(year), 'value': year} for year in sorted(df['Approval Date'].dt.year.unique())]
-
+    if selected_year = None:
+        selected_year = current_year
     filtered_df = df[df['Approval Date'].dt.year == selected_year]
     top_companies = filtered_df['Company'].value_counts().nlargest(10)
     fig_bar = go.Figure(data=[
