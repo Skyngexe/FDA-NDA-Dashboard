@@ -200,9 +200,9 @@ def update_statistics(data):
 def update_bar_chart(selected_year, stored_data):
     data = json.loads(stored_data)
     df = pd.DataFrame(data.get('data'))
-
+  
     df['Approval Date'] = pd.to_datetime(df['Approval Date'], format='%m%d%Y')
-
+    df['Year'] = df['Approval Date'].dt.year
     years = sorted(df['Approval Date'].dt.year.unique())
     year_options = [{'label': str(year), 'value': year} for year in years]
 
@@ -211,7 +211,7 @@ def update_bar_chart(selected_year, stored_data):
     if selected_year is None:
         selected_year = current_year  # Default to the latest year if none is selected
 
-    filtered_df = df[df['Approval Date'].dt.year == selected_year]
+    filtered_df = df[df['Year'] == selected_year]
     top_companies = filtered_df['Company'].value_counts().nlargest(10)
     fig_bar = go.Figure(data=[
         go.Bar(x=top_companies.index,
