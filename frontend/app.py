@@ -201,15 +201,15 @@ def update_bar_chart(selected_year, stored_data):
     data = json.loads(stored_data)
     df = pd.DataFrame(data.get('data'))
 
-    df['Approval Date'] = pd.to_datetime(df['Approval Date'], errors='coerce')
+    df['Approval Date'] = pd.to_datetime(df['Approval Date'], format='%m%d%Y')
 
     years = sorted(df['Approval Date'].dt.year.unique())
     year_options = [{'label': str(year), 'value': year} for year in years]
 
-    latest_year = years[-1]  # Get the latest year
+    current_year = datetime.today().year # Get the latest year
 
     if selected_year is None:
-        selected_year = latest_year  # Default to the latest year if none is selected
+        selected_year = current_year  # Default to the latest year if none is selected
 
     filtered_df = df[df['Approval Date'].dt.year == selected_year]
     top_companies = filtered_df['Company'].value_counts().nlargest(10)
