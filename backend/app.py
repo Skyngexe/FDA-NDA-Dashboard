@@ -45,16 +45,15 @@ def update():
     _, last_day = calendar.monthrange(start_date.year, start_date.month)
     end_date = datetime(start_date.year, start_date.month, last_day, 23, 59, 59)
 
-    data = list(fda_nda.find({
-        "Approval Date_1": {
+    record = list(fda_nda.find({
+        "Approval Date": {
             "$gte": start_date,
             "$lte": end_date
         }
     }))
 
     most_recent_drug = list(fda_nda.find().sort({'_id': -1}).limit(1))
-
-    return json_util.dumps({'data': data,
+    return json_util.dumps({'data': record,
                             "most_recent_drug": most_recent_drug
                             })
 
