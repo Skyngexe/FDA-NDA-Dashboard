@@ -157,7 +157,9 @@ def fetch_and_store_data(n_intervals, stored_data):
 )
 def update_statistics(data):
     data = json_util.loads(data)
-    df = pd.DataFrame(data.get('data'))
+    record = data.get('data')
+    record = [item for item in record if not isinstance(item, str)]
+    df = pd.DataFrame(record)
     most_recent_drug_info = data.get('most_recent_drug')[0]
 
     df['Approval Date'] = pd.to_datetime(df['Approval Date'], format='%m/%d/%Y')
@@ -199,7 +201,9 @@ def update_statistics(data):
 )
 def update_bar_chart(data, selected_year):
     data = json_util.loads(data)
-    df = pd.DataFrame(data.get('data'))
+    record = data.get('data')
+    record = [item for item in record if not isinstance(item, str)]
+    df = pd.DataFrame(record)
 
     df['Approval Date'] = pd.to_datetime(df['Approval Date'], format='%m/%d/%Y')
     current_year = datetime.today().year
@@ -240,7 +244,9 @@ def update_bar_chart(data, selected_year):
 )
 def update_drug_portfolio_size(data):
     data = json_util.loads(data)
-    df = pd.DataFrame(data.get('data'))
+    record = data.get('data')
+    record = [item for item in record if not isinstance(item, str)]
+    df = pd.DataFrame(record)
     drug_portfolio_size = df.groupby('Company')['_id'].count().reset_index(name='portfolio_size')
     drug_portfolio_size['count'] = drug_portfolio_size.groupby('portfolio_size')['Company'].transform('count')
 
@@ -278,7 +284,9 @@ def update_drug_portfolio_size(data):
 )
 def update_yearly_trend(data):
     data = json_util.loads(data)
-    df = pd.DataFrame(data.get('data'))
+    record = data.get('data')
+    record = [item for item in record if not isinstance(item, str)]
+    df = pd.DataFrame(record)
     df['Approval Date'] = pd.to_datetime(df['Approval Date'], format='%m/%d/%Y')
     df['Year'] = df['Approval Date'].dt.year
 
