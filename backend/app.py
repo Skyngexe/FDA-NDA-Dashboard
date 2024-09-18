@@ -57,7 +57,7 @@ def update():
     df['Year'] = df['Approval Date'].dt.year
 
     most_recent_drug = list(fda_nda.find().sort({'_id': -1}).limit(1))
-    return json_util.dumps({'data': df.to_dict(),
+    return json_util.dumps({'data': [df.to_dict()],
                             "most_recent_drug": most_recent_drug
                             })
 
