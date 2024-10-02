@@ -181,7 +181,7 @@ def update_statistics(data):
         (df['Approval Date'].dt.year == past_year)
         ].shape[0]
 
-    drug_name = most_recent_drug_info['Drug Name'].split('N')[0] if most_recent_drug_info else "N/A"
+    drug_name = most_recent_drug_info['Drug Name'].split('#')[0] if most_recent_drug_info else "N/A"
     drug_company = f"Company: {most_recent_drug_info['Company']}" if most_recent_drug_info else "N/A"
     last_updated_time = datetime.now(timezone.utc)
 
