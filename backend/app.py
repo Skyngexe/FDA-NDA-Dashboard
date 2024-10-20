@@ -23,14 +23,14 @@ def default():
 @app.route('/api/data', methods=['GET'])
 def get_full_data():
     df = get_data()
-    most_recent_drug = list(fda_nda.find().sort({'_id': -1}).limit(1))
+    most_recent_drug = list(fda_nda.find({},{'embedding': 0}).sort({'_id': -1}).limit(1))
     return json_util.dumps({'data': df.to_dict(),
                             'most_recent_drug': most_recent_drug})
 
 
 # helper function to fetch data from database and perform transformation
 def get_data():
-    data = list(fda_nda.find())
+    data = list(fda_nda.find({}, {'embedding': 0}))
     df = pd.DataFrame(data)
     df['Year'] = df['Approval Date'].dt.year  # Extract the year
     return df
@@ -50,9 +50,9 @@ def update():
             "$gte": start_date,
             "$lte": end_date
         }
-    }))
+    }, {'embedding': 0}))
 
-    most_recent_drug = list(fda_nda.find().sort({'_id': -1}).limit(1))
+    most_recent_drug = list(fda_nda.find({} ,{'embedding': 0}).sort({'_id': -1}).limit(1))
     df = pd.DataFrame(record)
     if not df.empty:
         df['Year'] = df['Approval Date'].dt.year
