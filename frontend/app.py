@@ -137,11 +137,12 @@ def fetch_and_store_data(n_intervals, stored_data):
     if stored_data:
         existing_data = json_util.loads(stored_data)
     else:
-        existing_data = {'data': [], 'most_recent_drug': None}
+        df, drug = fetch_full_data()
+        existing_data = {'data': df, 'most_recent_drug': drug}
 
     # Append new data if it's not empty
     if not df.empty:
-        new_data = df.to_dict(oreint='records')
+        #new_data = df.to_dict(oreint='records')
         existing_data['data'].extend(new_data)
     existing_data['most_recent_drug'] = drug
 
