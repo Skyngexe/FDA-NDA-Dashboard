@@ -142,7 +142,7 @@ def fetch_and_store_data(n_intervals, stored_data):
 
     # Append new data if it's not empty
     if not df.empty:
-        new_data = df.to_dict(oreint='records')
+        new_data = df.to_dict(orient='records')
         existing_data['data'].extend(new_data)
     existing_data['most_recent_drug'] = drug
 
