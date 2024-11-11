@@ -143,8 +143,9 @@ def fetch_and_store_data(n_intervals, stored_data):
     # Append new data if it's not empty
     if not df.empty:
         new_data = df.to_dict(orient='records')
-        if not any(record in existing_data['data'] for record in new_data):
-            existing_data['data'].extend(new_data)
+        existing_records = set(str(record['_id']['$oid']) for record in existing_data['data'])
+        new_records = [record for record in new_data if str(record['_id']['$oid']) not in existing_records]
+        existing_data['data'].extend(new_records)
     existing_data['most_recent_drug'] = drug
 
     return json_util.dumps(existing_data)
