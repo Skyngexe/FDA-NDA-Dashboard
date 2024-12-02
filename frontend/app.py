@@ -11,7 +11,6 @@ import plotly.express as px
 app = dash.Dash(__name__)
 server = app.server
 
-
 # Fetch full data once
 def fetch_full_data():
     response = requests.get('https://fda-nda-dashboard.onrender.com/api/data')
