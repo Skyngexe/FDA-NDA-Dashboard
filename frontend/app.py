@@ -57,7 +57,7 @@ app.layout = html.Div(style={
             'width': '300px',
             'boxShadow': '0 4px 15px rgba(0, 0, 0, 0.5)'
         }, children=[
-            html.H3(f"Approved Drugs This Month ({datetime.today().month} / {datetime.today().year})", style={'fontSize': '24px'}),
+            html.H3(f"Approved Drugs This Month", id='month', style={'fontSize': '24px'}),
             html.P(id='monthly-approvals-count', style={'fontSize': '40px', 'color': '#00FFF4'}),
             html.P("Approved Drugs Last Month", style={'fontSize': '12px'}),
             html.P(id='past-month-approvals-count', style={'fontSize': '20px', 'color': '#FF5733'})
@@ -156,6 +156,7 @@ def fetch_and_store_data(n_intervals, stored_data):
     Output('most-recent-drug-name', 'children'),
     Output('most-recent-drug-company', 'children'),
     Output('last-updated-time-value', 'children'),
+    Output('month', 'children'),
     Input('stored-data', 'data')
 )
 def update_statistics(data):
@@ -193,7 +194,8 @@ def update_statistics(data):
         str(past_month_approvals_count),
         drug_name,
         drug_company,
-        last_updated_time.strftime("%Y-%m-%d %H:%M:%S")
+        last_updated_time.strftime("%Y-%m-%d %H:%M:%S"),
+        f"{current_month}/{current_year}"
     )
 
 @app.callback(
