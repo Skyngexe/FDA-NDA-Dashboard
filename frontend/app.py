@@ -57,7 +57,8 @@ app.layout = html.Div(style={
             'width': '300px',
             'boxShadow': '0 4px 15px rgba(0, 0, 0, 0.5)'
         }, children=[
-            html.H3(f"Approved Drugs This Month", id='month', style={'fontSize': '24px'}),
+            html.H3(f"Approved Drugs This Month", style={'fontSize': '24px'}),
+            html.P(id='month', style={'fontSize': '24px'}),
             html.P(id='monthly-approvals-count', style={'fontSize': '40px', 'color': '#00FFF4'}),
             html.P("Approved Drugs Last Month", style={'fontSize': '12px'}),
             html.P(id='past-month-approvals-count', style={'fontSize': '20px', 'color': '#FF5733'})
